@@ -107,6 +107,35 @@ export class AuthService {
         }
     }
 
+    async logout(refreshToken: string): Promise<void> {
+        // delete the refresh token from the database
+        await prisma.refreshToken.deleteMany({
+            where: { token: refreshToken },
+        });
+    }
+
+  async validateToken(token: string): Promise<JWTPayload> {
+    try {
+        const decoded = jwt.verify(token, this.jwtSecret) as JWTPayload;
+
+        // Check if the user exists
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+        });
+
+        if (!user) {
+            throw createServiceError("User not found", 404);
+        }
+
+        return decoded;
+        } catch (error) {
+            if (error instanceof jwt.JsonWebTokenError) {
+                throw createServiceError("Invalid token", 401);
+            }
+            throw createServiceError("Token validation failed", 500, error);
+        }
+    }
+
     private async generateTokens(
         userId: string,
         email: string
