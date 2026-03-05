@@ -23,3 +23,5 @@ router.post(
     validateRequest(refreshTokenSchema),
     authController.logout
 );
+
+export default router;
