@@ -18,3 +18,19 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
 
     res.status(200).json(createSuccessResponse(tokens, "User logged in successfully"));
 });
+
+export const refreshTokens = asyncHandler(
+    async (req: Request, res: Response) => {
+        const { refreshToken } = req.body;
+        const tokens = await authService.refreshToken(refreshToken);
+
+        res.status(200).json(createSuccessResponse(tokens, "Tokens refreshed successfully"));
+    }
+);
+
+export const logout = asyncHandler(async (req: Request, res: Response) => {
+    const { refreshToken } = req.body;
+    await authService.logout(refreshToken);
+
+    res.status(200).json(createSuccessResponse(null, "User logged out successfully"));
+});
