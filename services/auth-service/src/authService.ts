@@ -1,4 +1,4 @@
-import { AuthTokens } from "@shared/types";
+import { AuthTokens, JWTPayload, ServiceError } from "@shared/types";
 import { createServiceError } from "@shared/utils";
 import { prisma } from "./database";
 import bcrypt from "bcryptjs";
@@ -47,6 +47,64 @@ export class AuthService {
 
         // generate tokens
         return this.generateTokens(user.id, user.email);
+    }
+
+    async login(email: string, password: string): Promise<AuthTokens> {
+        // find the user
+        const user = await prisma.user.findUnique({
+            where: { email },
+        });
+
+        if (!user) {
+            throw createServiceError("Invalid email or password", 401);
+        }
+
+        // verify the password
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) {
+            throw createServiceError("Invalid email or password", 401);
+        }
+
+        // generate tokens
+        return this.generateTokens(user.id, user.email);
+    }
+
+    async refreshToken(refreshToken: string): Promise<AuthTokens> {
+        try {
+            // verify the refresh token
+            const decoded = jwt.verify(
+                refreshToken,
+                this.jwtRefreshSecret
+            ) as JWTPayload;
+
+            // check if the refresh token exists in the database
+            const storedToken = await prisma.refreshToken.findUnique({
+                where: { token: refreshToken },
+                include: { user: true },
+            });
+
+            if (!storedToken || storedToken.expiresAt < new Date()) {
+                throw createServiceError("Invalid or expired refresh token", 401);
+            }
+
+            // generate new tokens
+            const tokens = await this.generateTokens(
+                storedToken.user.id,
+                storedToken.user.email
+            );
+
+            // delete the old refresh token
+            await prisma.refreshToken.delete({
+                where: { id: storedToken.id },
+            });
+
+            return tokens;
+        } catch (error) {
+            if (error instanceof ServiceError) {
+                throw error;
+            }
+            throw createServiceError("Invalid refresh token", 401, error);
+        }
     }
 
     private async generateTokens(
