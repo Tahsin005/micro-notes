@@ -3,6 +3,16 @@ import { createErrorResponse } from "@shared/utils";
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
+
+// extends express request interface to include custom properties
+declare global {
+    namespace Express {
+        interface Request {
+            user?: any;
+        }
+    }
+}
+
 export function authenticateToken(
     req: Request,
     res: Response,
