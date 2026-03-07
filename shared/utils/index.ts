@@ -33,3 +33,9 @@ export function createServiceError(
 ): ServiceError {
     return new ServiceError(message, statusCode, code, details);
 }
+
+export function sanitizeInput(input: string): string {
+    return input
+        .replace(/[<>]/g, "") // remove < and > characters
+        .trim(); // trim whitespace
+}

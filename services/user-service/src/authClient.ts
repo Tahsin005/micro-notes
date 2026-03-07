@@ -23,8 +23,8 @@ export class AuthClient {
 
             if (!response.data.success || !response.data.data) {
                 throw createServiceError(
-                "Invalid token response from auth service",
-                401
+                    "Invalid token response from auth service",
+                    401
                 );
             }
 
