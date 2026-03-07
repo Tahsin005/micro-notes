@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import dotenv from "dotenv";
+import proxyRoutes from "./routes/proxy";
 import { createErrorResponse } from "@shared/utils";
 
 dotenv.config();
@@ -36,6 +37,8 @@ app.use(
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+// setup proxy routes
+app.use(proxyRoutes);
 
 // Global error handler
 app.use(
