@@ -4,6 +4,7 @@ import helmet from "helmet";
 import dotenv from "dotenv";
 import proxyRoutes from "./routes/proxy";
 import { createErrorResponse } from "@shared/utils";
+import { gatewayAuth } from "./middleware/auth";
 
 dotenv.config();
 
@@ -36,6 +37,9 @@ app.use(
 // parse JSON bodies
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// auth middlware
+app.use(gatewayAuth);
 
 // setup proxy routes
 app.use(proxyRoutes);
