@@ -17,23 +17,26 @@ export function authenticateToken(
     req: Request,
     res: Response,
     next: NextFunction
-) {
+): void {
     const authHeader = req.headers["authorization"];
     const token = authHeader && authHeader.split(" ")[1]; // Bearer token
 
     if (!token) {
-        return res.status(401).json(createErrorResponse("Access token required"));
+        res.status(401).json(createErrorResponse("Access token required"));
+        return;
     }
 
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
         logError(new Error("JWT_SECRET is not defined"));
-        return res.status(500).json(createErrorResponse("Internal Server Error"));
+        res.status(500).json(createErrorResponse("Internal Server Error"));
+        return;
     }
 
-    jwt.verify(token, jwtSecret, (err: any, decoded: any) => {
+    jwt.verify(token, jwtSecret, (err: any, decoded: any): void => {
         if (err) {
-        return res.status(403).json(createErrorResponse("Invalid token"));
+            res.status(403).json(createErrorResponse("Invalid token"));
+            return;
         }
 
         req.user = decoded as JWTPayload; // Attach user info to request
@@ -50,7 +53,7 @@ export function asyncHandler(
 }
 
 export function validateRequest(schema: any) {
-    return (req: Request, res: Response, next: NextFunction) => {
+    return (req: Request, res: Response, next: NextFunction): void => {
         const { error } = schema.validate(req.body);
 
         if (error) {
@@ -63,11 +66,12 @@ export function validateRequest(schema: any) {
                 errors[field].push(detail.message);
             });
 
-            return res.status(400).json({
+            res.status(400).json({
                 success: false,
                 message: "Validation error",
                 errors,
             });
+            return;
         }
 
         next();
