@@ -51,6 +51,46 @@ export class UserService {
         return profile;
     }
 
+    async updateProfile(
+        userId: string,
+        profileData: Partial<UpdateProfileRequest>
+    ): Promise<UserProfile> {
+        // check if profile exists
+        const existingProfile = await prisma.userProfile.findUnique({
+            where: { userId },
+        });
+
+        if (!existingProfile) {
+            // if no profile exists, create one
+            return this.createProfile(userId, profileData);
+        }
+
+        // sanitize input data
+        const sanitizedData = this.sanitizeProfileData(profileData);
+
+        // update existing profile
+        const updatedProfile = await prisma.userProfile.update({
+            where: { userId },
+            data: sanitizedData,
+        });
+
+        return updatedProfile;
+    }
+
+    async deleteProfile(userId: string): Promise<void> {
+        const profile = await prisma.userProfile.findUnique({
+            where: { userId },
+        });
+
+        if (!profile) {
+            throw createServiceError("User profile not found", 404);
+        }
+
+        await prisma.userProfile.delete({
+            where: { userId },
+        });
+    }
+
     private sanitizeProfileData(
         data: Partial<UpdateProfileRequest>
     ): Partial<UpdateProfileRequest> {
