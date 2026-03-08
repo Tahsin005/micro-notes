@@ -45,6 +45,18 @@ export interface Tag {
     updatedAt: Date;
 }
 
+export interface CreateNoteRequest {
+    title: string;
+    content: string;
+    tagIds?: string[];
+}
+
+export interface UpdateNoteRequest {
+    title?: string;
+    content?: string;
+    tagIds?: string[];
+}
+
 export interface ServiceResponse<T = any> {
     success: boolean;
     data?: T;
