@@ -52,3 +52,34 @@ export const getNotes = asyncHandler(async (req: Request, res: Response) => {
 
     return res.status(200).json(createSuccessResponse(result, "Notes retrieved successfully"));
 });
+
+export const updateNote = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const { noteId } = req.params;
+
+    if (!userId) {
+        return res.status(401).json(createErrorResponse("Unauthorized"));
+    }
+
+    const authHeader = req.headers.authorization;
+    const authToken = authHeader?.startsWith("Bearer ")
+        ? authHeader.slice(7)
+        : undefined;
+
+    const note = await noteService.updateNote(noteId, userId, req.body, authToken);
+
+    return res.status(200).json(createSuccessResponse(note, "Note updated successfully"));
+});
+
+export const deleteNote = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const { noteId } = req.params;
+
+    if (!userId) {
+        return res.status(401).json(createErrorResponse("Unauthorized"));
+    }
+
+    await noteService.deleteNote(noteId, userId);
+
+    return res.status(200).json(createSuccessResponse(null, "Note deleted successfully"));
+});

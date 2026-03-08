@@ -62,6 +62,78 @@ export class TagsService {
         return tag as Tag;
     }
 
+    async updateTag(
+        tagId: string,
+        userId: string,
+        tagData: Partial<CreateTagRequest>
+    ): Promise<Tag> {
+        if (!isValidUUID(tagId)) {
+            throw createServiceError("Invalid tag id", 400);
+        }
+
+        const existing = await prisma.tag.findFirst({
+            where: { id: tagId, userId },
+        });
+
+        if (!existing) {
+            throw createServiceError("Tag not found", 404);
+        }
+
+        const updateData: any = {};
+
+        if (tagData.name !== undefined) {
+            updateData.name = sanitizeInput(tagData.name);
+        }
+
+        if (tagData.color !== undefined) {
+            const colorValue = tagData.color === "" ? null : tagData.color;
+            const sanitizedColor = colorValue
+                ? sanitizeInput(colorValue)
+                : null;
+
+            if (sanitizedColor && !this.isValidHexColor(sanitizedColor)) {
+                throw createServiceError(
+                    "Invalid color format, Use hex color format (eg: #FF5733 or #F73)",
+                    400
+                );
+            }
+
+            updateData.color = sanitizedColor;
+        }
+
+        try {
+            const tag = await prisma.tag.update({
+                where: { id: tagId },
+                data: updateData,
+            });
+
+            return tag as Tag;
+        } catch (error: any) {
+            if (error?.code === "P2002") {
+                throw createServiceError("Tag name already exists", 409);
+            }
+            throw createServiceError("Failed to update tag", 500);
+        }
+    }
+
+    async deleteTag(tagId: string, userId: string): Promise<void> {
+        if (!isValidUUID(tagId)) {
+            throw createServiceError("Invalid tag id", 400);
+        }
+
+        const existing = await prisma.tag.findFirst({
+            where: { id: tagId, userId },
+        });
+
+        if (!existing) {
+            throw createServiceError("Tag not found", 404);
+        }
+
+        await prisma.tag.delete({
+            where: { id: tagId },
+        });
+    }
+
     async getTagsByUser(
         page: number = 1,
         limit: number = 50,

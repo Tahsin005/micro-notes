@@ -1,7 +1,7 @@
-import { createServiceError, sanitizeInput } from "@shared/utils";
 import { prisma } from "./database";
 import { CreateNoteRequest, Note } from "@shared/types";
 import { TagsServiceClient } from "./tagsServiceClient";
+import { createServiceError, sanitizeInput } from "@shared/utils";
 
 export class NotesService {
     private tagsServiceClient: TagsServiceClient;
@@ -126,6 +126,78 @@ export class NotesService {
         }
 
         return note as Note;
+    }
+
+    async updateNote(
+        noteId: string,
+        userId: string,
+        noteData: Partial<CreateNoteRequest>,
+        authToken?: string
+    ): Promise<Note> {
+        const existing = await prisma.note.findFirst({
+            where: {
+                id: noteId,
+                userId,
+                isDeleted: false,
+            },
+        });
+
+        if (!existing) {
+            throw createServiceError("Note not found", 404);
+        }
+
+        const updateData: any = {};
+
+        if (noteData.title !== undefined) {
+            updateData.title = sanitizeInput(noteData.title);
+        }
+
+        if (noteData.content !== undefined) {
+            updateData.content = sanitizeInput(noteData.content);
+        }
+
+        const updatedNote = await prisma.note.update({
+            where: { id: noteId },
+            data: updateData,
+            include: {
+                noteTags: true,
+            },
+        });
+
+        if (noteData.tagIds) {
+            if (authToken) {
+                await this.tagsServiceClient.validateTags(noteData.tagIds, authToken);
+            }
+
+            await prisma.noteTag.deleteMany({
+                where: { noteId },
+            });
+
+            await this.addTagsToNote(noteId, noteData.tagIds);
+
+            return this.getNoteById(noteId, userId);
+        }
+
+        return updatedNote as Note;
+    }
+
+    async deleteNote(noteId: string, userId: string): Promise<void> {
+        const existing = await prisma.note.findFirst({
+            where: {
+                id: noteId,
+                userId,
+                isDeleted: false,
+            },
+        });
+
+        if (!existing) {
+            throw createServiceError("Note not found", 404);
+        }
+
+        await prisma.note.update({
+            where: { id: noteId },
+            data: { isDeleted: true },
+        });
     }
 
     private async addTagsToNote(noteId: string, tagIds: string[]): Promise<void> {

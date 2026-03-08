@@ -51,7 +51,7 @@ export const getTags = asyncHandler(async (req: Request, res: Response) => {
 
 export const getTagById = asyncHandler(async (req: Request, res: Response) => {
     const userId = req.user?.userId;
-    const { tagId } = req.params;
+    const tagId = String(req.params.tagId);
 
     if (!userId) {
         return res.status(401).json(createErrorResponse("Unauthorized"));
@@ -77,3 +77,29 @@ export const validateTags = asyncHandler(
         return res.status(200).json(createSuccessResponse(result, "Tags validated successfully"));
     }
 );
+
+export const updateTag = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const tagId = String(req.params.tagId);
+
+    if (!userId) {
+        return res.status(401).json(createErrorResponse("Unauthorized"));
+    }
+
+    const tag = await tagsService.updateTag(tagId, userId, req.body);
+
+    return res.status(200).json(createSuccessResponse(tag, "Tag updated successfully"));
+});
+
+export const deleteTag = asyncHandler(async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const tagId = String(req.params.tagId);
+
+    if (!userId) {
+        return res.status(401).json(createErrorResponse("Unauthorized"));
+    }
+
+    await tagsService.deleteTag(tagId, userId);
+
+    return res.status(200).json(createSuccessResponse(null, "Tag deleted successfully"));
+});
