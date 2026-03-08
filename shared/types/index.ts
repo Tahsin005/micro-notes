@@ -27,6 +27,24 @@ export interface UpdateProfileRequest {
     preferences?: Record<string, any>;
 }
 
+export interface Note {
+    id: string;
+    title: string;
+    content: string;
+    isDeleted: boolean;
+    createdAt: Date;
+    updatedAt: Date;
+    tags?: Tag[];
+}
+
+export interface Tag {
+    id: string;
+    name: string;
+    color?: string;
+    userId: string;
+    updatedAt: Date;
+}
+
 export interface ServiceResponse<T = any> {
     success: boolean;
     data?: T;
