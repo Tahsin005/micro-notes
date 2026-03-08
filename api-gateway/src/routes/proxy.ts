@@ -75,4 +75,12 @@ router.use(
     })
 );
 
+router.use(
+    "/api/notes",
+    createServiceProxy(servicesConfig.notes.url, {
+        "^/api/notes": "/notes", // Rewrite path to match service endpoint
+    })
+);
+
+
 export default router;

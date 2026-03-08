@@ -39,3 +39,12 @@ export function sanitizeInput(input: string): string {
         .replace(/[<>]/g, "") // remove < and > characters
         .trim(); // trim whitespace
 }
+
+export function parseEnvInt(
+    value: string | undefined,
+    defaultValue: number
+): number {
+    if (!value) return defaultValue;
+    const parsedValue = parseInt(value, 10);
+    return isNaN(parsedValue) ? defaultValue : parsedValue;
+}

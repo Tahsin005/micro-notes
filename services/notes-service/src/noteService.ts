@@ -31,6 +31,70 @@ export class NotesService {
         return note as Note;
     }
 
+
+    async getNotesByUser(
+        userId: string,
+        page: number = 1,
+        limit: number = 50,
+        search?: string
+    ): Promise<{
+        notes: Note[];
+        total: number;
+        page: number;
+        totalPages: number;
+    }> {
+        const skip = (page - 1) * limit;
+
+        // build where clause
+        const whereClause: any = {
+            userId,
+            isDeleted: false,
+        };
+
+        // add search functionality
+        if (search) {
+            const sanitizedSearch = sanitizeInput(search);
+            whereClause.OR = [
+                {
+                    title: {
+                        contains: sanitizedSearch,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    content: {
+                        contains: sanitizedSearch,
+                        mode: "insensitive",
+                    },
+                },
+            ];
+        }
+
+        const [notes, total] = await Promise.all([
+            prisma.note.findMany({
+                where: whereClause,
+                include: {
+                    noteTags: true,
+                },
+                skip,
+                take: limit,
+                orderBy: { updatedAt: "desc" },
+            }),
+            prisma.note.count({
+                where: whereClause,
+            }),
+        ]);
+
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            notes,
+            total,
+            page,
+            totalPages,
+        };
+    }
+
     async getNoteById(noteId: string, userId: string): Promise<Note> {
         const note = await prisma.note.findFirst({
             where: {
