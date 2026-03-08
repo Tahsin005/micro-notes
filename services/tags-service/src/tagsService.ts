@@ -4,7 +4,7 @@ import {
   sanitizeInput,
 } from "@shared/utils";
 import { CreateTagRequest, Tag } from "@shared/types";
-import prisma from "./database";
+import { prisma } from "./database";
 
 export class TagsService {
     async createTag(userId: string, tagData: CreateTagRequest): Promise<Tag> {
@@ -33,13 +33,14 @@ export class TagsService {
             });
 
             return tag as Tag;
-        } catch (error) {
-        // handle unique constaraint violation error
-        if (error.code === "P2002") {
-            throw createServiceError("Tag name already exists", 409);
+        } catch (error: any) {
+            console.error("Create tag error:", error);
+            // handle unique constaraint violation error
+            if (error?.code === "P2002") {
+                throw createServiceError("Tag name already exists", 409);
+            }
+            throw createServiceError("Failed to create tag", 500);
         }
-        throw createServiceError("Failed to create tag", 500);
-    }
   }
 
     async getTagById(tagId: string, userId: string): Promise<Tag> {

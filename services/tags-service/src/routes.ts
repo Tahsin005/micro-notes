@@ -9,6 +9,6 @@ router.use(authenticateToken);
 
 router.post("/", validateRequest(createTagSchema), tagController.createTag);
 router.get("/", tagController.getTags);
-router.post("/:tagId", validateRequest(validateTagsSchema), tagController.validateTags);
+router.post("/validate", validateRequest(validateTagsSchema), tagController.validateTags);
 
 export default router;

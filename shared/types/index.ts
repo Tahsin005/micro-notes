@@ -58,8 +58,8 @@ export interface UpdateNoteRequest {
 }
 
 export interface CreateTagRequest {
-  name: string;
-  color?: string;
+    name: string;
+    color?: string;
 }
 
 export interface ServiceResponse<T = any> {

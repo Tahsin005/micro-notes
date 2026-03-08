@@ -1,9 +1,13 @@
 import { createServiceError, sanitizeInput } from "@shared/utils";
 import { prisma } from "./database";
 import { CreateNoteRequest, Note } from "@shared/types";
+import { TagsServiceClient } from "./tagsServiceClient";
 
 export class NotesService {
-    constructor() {}
+    private tagsServiceClient: TagsServiceClient;
+    constructor() {
+        this.tagsServiceClient = new TagsServiceClient();
+    }
 
     async createNote(
         userId: string,
@@ -16,17 +20,27 @@ export class NotesService {
 
         //Create note
         const note = await prisma.note.create({
-        data: {
-            userId,
-            title: sanitizedTitl,
-            content: sanitizedContent,
-        },
-        include: {
-            noteTags: true,
-        },
+            data: {
+                userId,
+                title: sanitizedTitl,
+                content: sanitizedContent,
+            },
+            include: {
+                noteTags: true,
+            },
         });
 
-        // TODO: add tags to note if provided
+        // add tags to note if provided
+        if (noteData.tagIds && note.noteTags.length === 0) {
+            // Validate tags exists and belongs to user
+            if (authToken) {
+                await this.tagsServiceClient.validateTags(noteData.tagIds, authToken);
+            }
+            await this.addTagsToNote(note.id, noteData.tagIds);
+
+            // fetch the note again with tags
+            return this.getNoteById(note.id, userId);
+        }
 
         return note as Note;
     }
@@ -112,5 +126,17 @@ export class NotesService {
         }
 
         return note as Note;
+    }
+
+    private async addTagsToNote(noteId: string, tagIds: string[]): Promise<void> {
+        const noteTagData = tagIds.map((tagId) => ({
+            noteId,
+            tagId,
+        }));
+
+        await prisma.noteTag.createMany({
+            data: noteTagData,
+            skipDuplicates: true, // avoid errors if tag is already associated
+        });
     }
 }
