@@ -57,6 +57,11 @@ export interface UpdateNoteRequest {
     tagIds?: string[];
 }
 
+export interface CreateTagRequest {
+  name: string;
+  color?: string;
+}
+
 export interface ServiceResponse<T = any> {
     success: boolean;
     data?: T;

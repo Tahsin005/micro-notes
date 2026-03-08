@@ -52,5 +52,5 @@ export const getAllServices = (): ServiceConfig[] => {
 };
 
 export const getActiveServices = (): ServiceConfig[] => {
-    return [servicesConfig.auth, servicesConfig.users, servicesConfig.notes];
+    return [servicesConfig.auth, servicesConfig.users, servicesConfig.notes, servicesConfig.tags];
 };

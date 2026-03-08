@@ -82,5 +82,13 @@ router.use(
     })
 );
 
+router.use(
+    "/api/tags",
+    createServiceProxy(servicesConfig.tags.url, {
+        "^/api/tags": "/tags", // Rewrite path to match service endpoint
+    })
+);
+
+
 
 export default router;
